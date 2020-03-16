@@ -10,9 +10,10 @@ print(board)
 def isBoardSolved(current_board):
     if (current_board == solved_board).all():
         return True
-    else: 
+    else:
         return False
 
 
 print(isBoardSolved(board))
 queue = queue.Queue()
+
