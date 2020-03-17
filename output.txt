@@ -5,4 +5,4 @@ fringe_size: 23292
 max_fringe_size: 24054
 search_depth: 24
 max_search_depth: 25
-running_time: 3.08149270
+running_time: 3.08084220
