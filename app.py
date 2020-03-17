@@ -1,4 +1,5 @@
 import argparse
+import random
 
 # GLOBAL VARIABLES
 SOLVED_BOARD_2x2 = [[1, 2], [3, 0]]
@@ -9,15 +10,17 @@ EMPTY_FIELD = {}
 
 
 class Node:
-    def __init__(self, current_board, parent, last_move):
+    def __init__(self, current_board, parent, last_move, way):
         self.board = current_board
         self.children = {}
         if parent != 'Root':
             self.parent = parent
             self.last = last_move
+        self.way = way.copy()
+        self.way.append(last_move)
 
     def create_child(self, board_after_move, move):
-        child = Node(board_after_move, self, move)
+        child = Node(board_after_move, self, move, self.way)
         self.children[move] = child
 
     def make_move(self, move):
@@ -95,10 +98,11 @@ if __name__ == '__main__':
                 EMPTY_FIELD['row'] = j
                 EMPTY_FIELD['column'] = i
 
-    root = Node(START_BOARD, 'Root', None)
+    root = Node(START_BOARD, 'Root', None, [])
     print(root.board)
-    print(EMPTY_FIELD)
     root.make_move('U')
     print(root.children['U'].board)
-    print(EMPTY_FIELD)
-
+    print(root.children['U'].way)
+    root.children['U'].make_move('L')
+    print(root.children['U'].children['L'].board)
+    print(root.children['U'].children['L'].way)
