@@ -3,10 +3,11 @@ import random
 
 # GLOBAL VARIABLES
 SOLVED_BOARD_2x2 = [[1, 2], [3, 0]]
-SOLVED_BOARD_3x3 = [[1, 2, 3], [4, 5, 6], [7, 8, 0]]
+SOLVED_BOARD_3x3 = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '0']]
 SOLVED_BOARD_4x4 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]]
 START_BOARD = []
 EMPTY_FIELD = {}
+ORDER = []
 
 
 class Node:
@@ -18,6 +19,7 @@ class Node:
             self.last = last_move
         self.way = way.copy()
         self.way.append(last_move)
+        self.to_visit = ORDER.copy()
 
     def create_child(self, board_after_move, move):
         child = Node(board_after_move, self, move, self.way)
@@ -25,49 +27,91 @@ class Node:
 
     def make_move(self, move):
         if move == 'L':
-            if EMPTY_FIELD['column'] == 0:
-                pass
-            else:
-                tmp_array = self.board.copy()
-                tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] - 1], \
-                tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']] \
-                    = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-                      tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] - 1]
-                EMPTY_FIELD['column'] -= 1
-                self.create_child(tmp_array, move)
+            tmp_array = []
+            for row in self.board:
+                tmp_array.append(row.copy())
+            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] - 1], \
+            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']] \
+                = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
+                  tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] - 1]
+            EMPTY_FIELD['column'] -= 1
+            self.create_child(tmp_array, move)
         elif move == 'R':
-            if EMPTY_FIELD['column'] == len(START_BOARD[EMPTY_FIELD['row']]) - 1:
-                pass
-            else:
-                tmp_array = self.board.copy()
-                tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-                tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] + 1] \
-                    = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] + 1], \
-                      tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']]
-                EMPTY_FIELD['column'] += 1
-                self.create_child(tmp_array, move)
+            tmp_array = []
+            for row in self.board:
+                tmp_array.append(row.copy())
+            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
+            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] + 1] \
+                = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] + 1], \
+                  tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']]
+            EMPTY_FIELD['column'] += 1
+            self.create_child(tmp_array, move)
         elif move == 'U':
-            if EMPTY_FIELD['row'] == 0:
-                pass
-            else:
-                tmp_array = self.board.copy()
-                tmp_array[EMPTY_FIELD['row'] - 1][EMPTY_FIELD['column']], \
-                tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']] \
-                    = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-                      tmp_array[EMPTY_FIELD['row'] - 1][EMPTY_FIELD['column']]
-                EMPTY_FIELD['row'] -= 1
-                self.create_child(tmp_array, move)
+            tmp_array = []
+            for row in self.board:
+                tmp_array.append(row.copy())
+            tmp_array[EMPTY_FIELD['row'] - 1][EMPTY_FIELD['column']], \
+            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']] \
+                = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
+                  tmp_array[EMPTY_FIELD['row'] - 1][EMPTY_FIELD['column']]
+            EMPTY_FIELD['row'] -= 1
+            self.create_child(tmp_array, move)
         elif move == 'D':
-            if EMPTY_FIELD['row'] == len(START_BOARD[EMPTY_FIELD['column']]) - 1:
-                pass
-            else:
-                tmp_array = self.board.copy()
-                tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-                tmp_array[EMPTY_FIELD['row'] + 1][EMPTY_FIELD['column']] \
-                    = tmp_array[EMPTY_FIELD['row'] + 1][EMPTY_FIELD['column']], \
-                      tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']]
-                EMPTY_FIELD['row'] += 1
-                self.create_child(tmp_array, move)
+            tmp_array = []
+            for row in self.board:
+                tmp_array.append(row.copy())
+            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
+            tmp_array[EMPTY_FIELD['row'] + 1][EMPTY_FIELD['column']] \
+                = tmp_array[EMPTY_FIELD['row'] + 1][EMPTY_FIELD['column']], \
+                  tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']]
+            EMPTY_FIELD['row'] += 1
+            self.create_child(tmp_array, move)
+
+
+def dfs(depth):
+    current_node = Node(START_BOARD, 'Root', None, [])
+    root_flag = True
+    if EMPTY_FIELD['column'] == 2:
+        current_node.to_visit.remove('R')
+    elif EMPTY_FIELD['column'] == 0:
+        current_node.to_visit.remove('L')
+    elif EMPTY_FIELD['row'] == 2:
+        current_node.to_visit.remove('D')
+    elif EMPTY_FIELD['row'] == 0:
+        current_node.to_visit.remove('U')
+
+    while depth > 0:
+        print(current_node)
+        print(current_node.board)
+        print(current_node.way)
+        if current_node.board == SOLVED_BOARD_3x3:
+            return "Rozwiazano"
+        elif len(current_node.way) == 20:
+            print('Switched')
+            #TODO Zmienić pozycje zera tutaj tez i chyba git
+            current_node = current_node.parent
+        elif len(current_node.to_visit) != 0:
+            if not root_flag:
+                try:
+                    if EMPTY_FIELD['column'] == 2:
+                        current_node.to_visit.remove('R')
+                    if EMPTY_FIELD['column'] == 0:
+                        current_node.to_visit.remove('L')
+                    if EMPTY_FIELD['row'] == 2:
+                        current_node.to_visit.remove('D')
+                    if EMPTY_FIELD['row'] == 0:
+                        current_node.to_visit.remove('U')
+                except ValueError:
+                    print(ValueError)
+            print("!!! po za")
+            move = current_node.to_visit[0]
+            current_node.make_move(move)
+            current_node.to_visit.remove(move)
+            current_node = current_node.children[move]
+            root_flag = False
+        else:
+            current_node = current_node.parent
+        depth -= 1
 
 
 if __name__ == '__main__':
@@ -80,6 +124,9 @@ if __name__ == '__main__':
     parser.add_argument('solution_file')
     parser.add_argument('statistic_file')
     args = parser.parse_args()
+
+    for elem in args.order:
+        ORDER.append(elem)
 
     # Loading start board from file
     with open(args.source_file) as board:
@@ -98,11 +145,8 @@ if __name__ == '__main__':
                 EMPTY_FIELD['row'] = j
                 EMPTY_FIELD['column'] = i
 
-    root = Node(START_BOARD, 'Root', None, [])
-    print(root.board)
-    root.make_move('U')
-    print(root.children['U'].board)
-    print(root.children['U'].way)
-    root.children['U'].make_move('L')
-    print(root.children['U'].children['L'].board)
-    print(root.children['U'].children['L'].way)
+    print(dfs(100000))
+
+
+
+
