@@ -68,7 +68,7 @@ class Node:
             self.create_child(tmp_array, move)
 
 
-def dfs(depth):
+def dfs():
     current_node = Node(START_BOARD, 'Root', None, [])
     root_flag = True
     if EMPTY_FIELD['column'] == 2:
@@ -80,7 +80,7 @@ def dfs(depth):
     elif EMPTY_FIELD['row'] == 0:
         current_node.to_visit.remove('U')
 
-    while depth > 0:
+    while True:
         print(current_node)
         print(current_node.board)
         print(current_node.way)
@@ -88,7 +88,15 @@ def dfs(depth):
             return "Rozwiazano"
         elif len(current_node.way) == 20:
             print('Switched')
-            #TODO Zmienić pozycje zera tutaj tez i chyba git
+            last_move = current_node.way[-1]
+            if last_move == 'U':
+                EMPTY_FIELD['row'] += 1
+            if last_move == 'D':
+                EMPTY_FIELD['row'] -= 1
+            if last_move == 'L':
+                EMPTY_FIELD['column'] += 1
+            if last_move == 'R':
+                EMPTY_FIELD['column'] -= 1
             current_node = current_node.parent
         elif len(current_node.to_visit) != 0:
             if not root_flag:
@@ -103,7 +111,6 @@ def dfs(depth):
                         current_node.to_visit.remove('U')
                 except ValueError:
                     print(ValueError)
-            print("!!! po za")
             move = current_node.to_visit[0]
             current_node.make_move(move)
             current_node.to_visit.remove(move)
@@ -111,7 +118,6 @@ def dfs(depth):
             root_flag = False
         else:
             current_node = current_node.parent
-        depth -= 1
 
 
 if __name__ == '__main__':
@@ -145,7 +151,7 @@ if __name__ == '__main__':
                 EMPTY_FIELD['row'] = j
                 EMPTY_FIELD['column'] = i
 
-    print(dfs(100000))
+    print(dfs())
 
 
 
