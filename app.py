@@ -13,12 +13,17 @@ ORDER = []
 class Node:
     def __init__(self, current_board, parent, last_move, way):
         self.board = current_board
+        # children['L'] - dziecko po ruchu w lewo, R prawo itd jakby cos XD
         self.children = {}
         if parent != 'Root':
             self.parent = parent
+            # To nizej potrzebne do tego zeby nie sprawdzal mozliwosci cofania sie czyli jak ostatni byl w dol
+            # to zeby nie szedl do gory
             self.last = last_move
+        # A to jest jakie ruchy do tego doprowadzily
         self.way = way.copy()
         self.way.append(last_move)
+        # Kolejka do odwiedzenia, na razie uzyta w dfsie
         self.to_visit = ORDER.copy()
 
     def create_child(self, board_after_move, move):
@@ -26,51 +31,51 @@ class Node:
         self.children[move] = child
 
     def make_move(self, move):
+        y = EMPTY_FIELD['row']
+        x = EMPTY_FIELD['column']
         if move == 'L':
             tmp_array = []
             for row in self.board:
                 tmp_array.append(row.copy())
-            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] - 1], \
-            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']] \
-                = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-                  tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] - 1]
+            tmp_array[y][x - 1], tmp_array[y][x] = tmp_array[y][x], tmp_array[y][x - 1]
             EMPTY_FIELD['column'] -= 1
             self.create_child(tmp_array, move)
         elif move == 'R':
             tmp_array = []
             for row in self.board:
                 tmp_array.append(row.copy())
-            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] + 1] \
-                = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column'] + 1], \
-                  tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']]
+            tmp_array[y][x], tmp_array[y][x + 1] = tmp_array[y][x + 1], tmp_array[y][x]
             EMPTY_FIELD['column'] += 1
             self.create_child(tmp_array, move)
         elif move == 'U':
             tmp_array = []
             for row in self.board:
                 tmp_array.append(row.copy())
-            tmp_array[EMPTY_FIELD['row'] - 1][EMPTY_FIELD['column']], \
-            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']] \
-                = tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-                  tmp_array[EMPTY_FIELD['row'] - 1][EMPTY_FIELD['column']]
+            tmp_array[y - 1][x], tmp_array[y][x] = tmp_array[y][x], tmp_array[y - 1][x]
             EMPTY_FIELD['row'] -= 1
             self.create_child(tmp_array, move)
         elif move == 'D':
             tmp_array = []
             for row in self.board:
                 tmp_array.append(row.copy())
-            tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']], \
-            tmp_array[EMPTY_FIELD['row'] + 1][EMPTY_FIELD['column']] \
-                = tmp_array[EMPTY_FIELD['row'] + 1][EMPTY_FIELD['column']], \
-                  tmp_array[EMPTY_FIELD['row']][EMPTY_FIELD['column']]
+            tmp_array[y][x], tmp_array[y + 1][x] = tmp_array[y + 1][x], tmp_array[y][x]
             EMPTY_FIELD['row'] += 1
             self.create_child(tmp_array, move)
 
 
-def dfs():
-    current_node = Node(START_BOARD, 'Root', None, [])
-    root_flag = True
+# Auxiliary functions
+def change_position_of_blank_field(last_move):
+    if last_move == 'U':
+        EMPTY_FIELD['row'] += 1
+    if last_move == 'D':
+        EMPTY_FIELD['row'] -= 1
+    if last_move == 'L':
+        EMPTY_FIELD['column'] += 1
+    if last_move == 'R':
+        EMPTY_FIELD['column'] -= 1
+
+
+def remove_ways_to_out_of_board(current_node):
     if EMPTY_FIELD['column'] == 2:
         current_node.to_visit.remove('R')
     elif EMPTY_FIELD['column'] == 0:
@@ -80,7 +85,14 @@ def dfs():
     elif EMPTY_FIELD['row'] == 0:
         current_node.to_visit.remove('U')
 
+
+# Algorithms
+def dfs():
+    current_node = Node(START_BOARD, 'Root', None, [])
+    root_flag = True
+    remove_ways_to_out_of_board(current_node)
     while True:
+        # TODO Randomowe printy do wyjebania
         print(current_node)
         print(current_node.board)
         print(current_node.way)
@@ -89,27 +101,14 @@ def dfs():
         elif len(current_node.way) == 20:
             print('Switched')
             last_move = current_node.way[-1]
-            if last_move == 'U':
-                EMPTY_FIELD['row'] += 1
-            if last_move == 'D':
-                EMPTY_FIELD['row'] -= 1
-            if last_move == 'L':
-                EMPTY_FIELD['column'] += 1
-            if last_move == 'R':
-                EMPTY_FIELD['column'] -= 1
+            change_position_of_blank_field(last_move)
             current_node = current_node.parent
         elif len(current_node.to_visit) != 0:
             if not root_flag:
                 try:
-                    if EMPTY_FIELD['column'] == 2:
-                        current_node.to_visit.remove('R')
-                    if EMPTY_FIELD['column'] == 0:
-                        current_node.to_visit.remove('L')
-                    if EMPTY_FIELD['row'] == 2:
-                        current_node.to_visit.remove('D')
-                    if EMPTY_FIELD['row'] == 0:
-                        current_node.to_visit.remove('U')
+                    remove_ways_to_out_of_board(current_node)
                 except ValueError:
+                    # Wystepuje gdy chcemy usunac ruch ktorego nei ma w tablicy
                     print(ValueError)
             move = current_node.to_visit[0]
             current_node.make_move(move)
@@ -118,6 +117,10 @@ def dfs():
             root_flag = False
         else:
             current_node = current_node.parent
+
+
+def bfs():
+    pass
 
 
 if __name__ == '__main__':
