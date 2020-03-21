@@ -1,5 +1,6 @@
 import argparse
 import random
+import time
 
 # GLOBAL VARIABLES
 SOLVED_BOARD_2x2 = [[1, 2], [3, 0]]
@@ -8,6 +9,7 @@ SOLVED_BOARD_4x4 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]
 START_BOARD = []
 EMPTY_FIELD = {}
 ORDER = []
+DEPTH = 25
 
 
 class Node:
@@ -17,9 +19,7 @@ class Node:
         self.children = {}
         if parent != 'Root':
             self.parent = parent
-            # To nizej potrzebne do tego zeby nie sprawdzal mozliwosci cofania sie czyli jak ostatni byl w dol
-            # to zeby nie szedl do gory
-            self.last = last_move
+        self.last = last_move
         # A to jest jakie ruchy do tego doprowadzily
         self.way = way.copy()
         self.way.append(last_move)
@@ -75,56 +75,123 @@ def change_position_of_blank_field(last_move):
         EMPTY_FIELD['column'] -= 1
 
 
-def remove_ways_to_out_of_board(current_node):
-    if EMPTY_FIELD['column'] == 2:
+def remove_ways_to_out_of_board(current_node, flag=False):
+    if EMPTY_FIELD['column'] == 2 and EMPTY_FIELD['row'] == 2:
         current_node.to_visit.remove('R')
+        current_node.to_visit.remove('D')
+    elif EMPTY_FIELD['column'] == 2 and EMPTY_FIELD['row'] == 0:
+        current_node.to_visit.remove('R')
+        current_node.to_visit.remove('U')
+    elif EMPTY_FIELD['column'] == 0 and EMPTY_FIELD['row'] == 0:
+        current_node.to_visit.remove('L')
+        current_node.to_visit.remove('U')
+    elif EMPTY_FIELD['column'] == 0 and EMPTY_FIELD['row'] == 2:
+        current_node.to_visit.remove('L')
+        current_node.to_visit.remove('D')
     elif EMPTY_FIELD['column'] == 0:
         current_node.to_visit.remove('L')
-    elif EMPTY_FIELD['row'] == 2:
-        current_node.to_visit.remove('D')
+    elif EMPTY_FIELD['column'] == 2:
+        current_node.to_visit.remove('R')
     elif EMPTY_FIELD['row'] == 0:
         current_node.to_visit.remove('U')
+    elif EMPTY_FIELD['row'] == 2:
+        current_node.to_visit.remove('D')
+    if not flag:
+        if current_node.last == 'R':
+            current_node.to_visit.remove('L')
+        elif current_node.last == 'L':
+            current_node.to_visit.remove('R')
+        elif current_node.last == 'U':
+            current_node.to_visit.remove('D')
+        elif current_node.last == 'D':
+            current_node.to_visit.remove('U')
+
+
+def is_solved (board):
+    if board == SOLVED_BOARD_3x3:
+        return True
+
+
+def find_and_set_empty_field(board):
+    for j in range(len(board)):
+        for i in range(len(board[j])):
+            if board[j][i] == '0':
+                EMPTY_FIELD['row'] = j
+                EMPTY_FIELD['column'] = i
 
 
 # Algorithms
 def dfs():
     current_node = Node(START_BOARD, 'Root', None, [])
     root_flag = True
-    remove_ways_to_out_of_board(current_node)
+    remove_ways_to_out_of_board(current_node, root_flag)
     while True:
-        # TODO Randomowe printy do wyjebania
-        print(current_node)
-        print(current_node.board)
-        print(current_node.way)
-        if current_node.board == SOLVED_BOARD_3x3:
+        if is_solved(current_node.board):
             return "Rozwiazano"
-        elif len(current_node.way) == 20:
-            print('Switched')
-            last_move = current_node.way[-1]
-            change_position_of_blank_field(last_move)
+        elif len(current_node.way) == DEPTH:
+            #print('Switched')
             current_node = current_node.parent
+            find_and_set_empty_field(current_node.board)
         elif len(current_node.to_visit) != 0:
             if not root_flag:
                 try:
-                    remove_ways_to_out_of_board(current_node)
+                    remove_ways_to_out_of_board(current_node, root_flag)
                 except ValueError:
                     # Wystepuje gdy chcemy usunac ruch ktorego nei ma w tablicy
-                    print(ValueError)
-            move = current_node.to_visit[0]
-            current_node.make_move(move)
-            current_node.to_visit.remove(move)
-            current_node = current_node.children[move]
-            root_flag = False
+                    # print(ValueError)
+                    pass
+            if len(current_node.to_visit) != 0:
+                move = current_node.to_visit[0]
+                current_node.make_move(move)
+                current_node.to_visit.remove(move)
+                current_node = current_node.children[move]
+                find_and_set_empty_field(current_node.board)
+                root_flag = False
+            else:
+                if current_node.last is None:
+                    return ("Nie znaleziono rozwiazania")
+                else:
+                    current_node = current_node.parent
+                    find_and_set_empty_field(current_node.board)
         else:
-            current_node = current_node.parent
+            if current_node.last is None:
+                return("Nie znaleziono rozwiazania")
+            else:
+                current_node = current_node.parent
+                find_and_set_empty_field(current_node.board)
 
 
 def bfs():
-    pass
+    current_node = Node(START_BOARD, 'Root', None, [])
+    remove_ways_to_out_of_board(current_node, True)
+    queue = []
+    while True:
+        if is_solved(current_node.board):
+            return "Rozwiazano"
+        else:
+            try:
+                remove_ways_to_out_of_board(current_node, False)
+            except ValueError:
+                # Wystepuje gdy chcemy usunac ruch ktorego nei ma w tablicy
+                print(ValueError)
+            for move in current_node.to_visit:
+                current_node.make_move(move)
+                current_node = current_node.children[move]
+                queue.append(current_node)
+                last_move = current_node.way[-1]
+                change_position_of_blank_field(last_move)
+                current_node = current_node.parent
+            try:
+                if current_node.last is not None:
+                    queue.remove(current_node)
+            except ValueError:
+                print(current_node.way)
+            current_node = queue[0]
+            find_and_set_empty_field(current_node.board)
 
 
 if __name__ == '__main__':
-
+    start_time = time.time()
     # Parsing
     parser = argparse.ArgumentParser(description="Algorithm, order, source file, solution file, statistics file.")
     parser.add_argument('algorithm')
@@ -148,14 +215,10 @@ if __name__ == '__main__':
                 START_BOARD.append(line.split())
 
     # Setting coordinates of empty field
-    for j in range(len(START_BOARD)):
-        for i in range(len(START_BOARD[j])):
-            if START_BOARD[j][i] == '0':
-                EMPTY_FIELD['row'] = j
-                EMPTY_FIELD['column'] = i
+    find_and_set_empty_field(START_BOARD)
 
-    print(dfs())
-
+    print(bfs())
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
 
