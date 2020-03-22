@@ -5,11 +5,12 @@ import time
 # GLOBAL VARIABLES
 SOLVED_BOARD_2x2 = [[1, 2], [3, 0]]
 SOLVED_BOARD_3x3 = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '0']]
-SOLVED_BOARD_4x4 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 0]]
+SOLVED_BOARD_4x4 = [['1', '2', '3', '4'], ['5', '6', '7', '8'], ['9', '10', '11', '12'], ['13', '14', '15', '0']]
+SOLVED_BOARD = SOLVED_BOARD_4x4
 START_BOARD = []
 EMPTY_FIELD = {}
 ORDER = []
-DEPTH = 25
+DEPTH = 20
 
 
 class Node:
@@ -25,7 +26,7 @@ class Node:
         # A to jest jakie ruchy do tego doprowadzily
         self.way = way.copy()
         self.way.append(last_move)
-        # Kolejka do odwiedzenia, na razie uzyta w dfsie
+        # Kolejka do odwiedzenia
         self.to_visit = ORDER.copy()
 
     def create_child(self, board_after_move, move):
@@ -78,46 +79,62 @@ def change_position_of_blank_field(last_move):
 
 
 def remove_ways_to_out_of_board(current_node, flag=False):
-    if EMPTY_FIELD['column'] == 2 and EMPTY_FIELD['row'] == 2:
+    is_removed_l = False
+    is_removed_r = False
+    is_removed_u = False
+    is_removed_d = False
+    if EMPTY_FIELD['column'] == len(SOLVED_BOARD[0])-1 and EMPTY_FIELD['row'] == len(SOLVED_BOARD)-1:
         current_node.to_visit.remove('R')
         current_node.to_visit.remove('D')
-    elif EMPTY_FIELD['column'] == 2 and EMPTY_FIELD['row'] == 0:
+        is_removed_r = True
+        is_removed_d = True
+    elif EMPTY_FIELD['column'] == len(SOLVED_BOARD[0])-1 and EMPTY_FIELD['row'] == 0:
         current_node.to_visit.remove('R')
         current_node.to_visit.remove('U')
+        is_removed_r = True
+        is_removed_u = True
     elif EMPTY_FIELD['column'] == 0 and EMPTY_FIELD['row'] == 0:
         current_node.to_visit.remove('L')
         current_node.to_visit.remove('U')
-    elif EMPTY_FIELD['column'] == 0 and EMPTY_FIELD['row'] == 2:
+        is_removed_l = True
+        is_removed_u = True
+    elif EMPTY_FIELD['column'] == 0 and EMPTY_FIELD['row'] == len(SOLVED_BOARD)-1:
         current_node.to_visit.remove('L')
         current_node.to_visit.remove('D')
+        is_removed_l = True
+        is_removed_d = True
     elif EMPTY_FIELD['column'] == 0:
         current_node.to_visit.remove('L')
-    elif EMPTY_FIELD['column'] == 2:
+        is_removed_l = True
+    elif EMPTY_FIELD['column'] == len(SOLVED_BOARD[0])-1:
         current_node.to_visit.remove('R')
+        is_removed_r = True
     elif EMPTY_FIELD['row'] == 0:
         current_node.to_visit.remove('U')
-    elif EMPTY_FIELD['row'] == 2:
+        is_removed_u = True
+    elif EMPTY_FIELD['row'] == len(SOLVED_BOARD)-1:
         current_node.to_visit.remove('D')
+        is_removed_d = True
     if not flag:
-        if current_node.last == 'R':
+        if current_node.last == 'R' and not is_removed_l:
             current_node.to_visit.remove('L')
-        elif current_node.last == 'L':
+        elif current_node.last == 'L' and not is_removed_r:
             current_node.to_visit.remove('R')
-        elif current_node.last == 'U':
+        elif current_node.last == 'U' and not is_removed_d:
             current_node.to_visit.remove('D')
-        elif current_node.last == 'D':
+        elif current_node.last == 'D' and not is_removed_u:
             current_node.to_visit.remove('U')
 
 
-def is_solved (board):
-    if board == SOLVED_BOARD_3x3:
+def is_solved(test_board, solved_board):
+    if test_board == solved_board:
         return True
 
 
-def find_and_set_empty_field(board):
-    for j in range(len(board)):
-        for i in range(len(board[j])):
-            if board[j][i] == '0':
+def find_and_set_empty_field(test_board):
+    for j in range(len(test_board)):
+        for i in range(len(test_board[j])):
+            if test_board[j][i] == '0':
                 EMPTY_FIELD['row'] = j
                 EMPTY_FIELD['column'] = i
 
@@ -126,22 +143,18 @@ def find_and_set_empty_field(board):
 def dfs():
     current_node = Node(START_BOARD, 'Root', None, [])
     root_flag = True
+    parent_flag = False
     remove_ways_to_out_of_board(current_node, root_flag)
     while True:
-        if is_solved(current_node.board):
-            return "Rozwiazano"
+        if is_solved(current_node.board, SOLVED_BOARD):
+            return current_node.way
         elif len(current_node.way) == DEPTH:
-            #print('Switched')
             current_node = current_node.parent
             find_and_set_empty_field(current_node.board)
+            parent_flag = True
         elif len(current_node.to_visit) != 0:
-            if not root_flag:
-                try:
-                    remove_ways_to_out_of_board(current_node, root_flag)
-                except ValueError:
-                    # Wystepuje gdy chcemy usunac ruch ktorego nei ma w tablicy
-                    # print(ValueError)
-                    pass
+            if not root_flag and not parent_flag:
+                remove_ways_to_out_of_board(current_node)
             if len(current_node.to_visit) != 0:
                 move = current_node.to_visit[0]
                 current_node.make_move(move)
@@ -149,18 +162,21 @@ def dfs():
                 current_node = current_node.children[move]
                 find_and_set_empty_field(current_node.board)
                 root_flag = False
+                parent_flag = False
             else:
                 if current_node.last is None:
                     return ("Nie znaleziono rozwiazania")
                 else:
                     current_node = current_node.parent
                     find_and_set_empty_field(current_node.board)
+                    parent_flag = True
         else:
             if current_node.last is None:
                 return("Nie znaleziono rozwiazania")
             else:
                 current_node = current_node.parent
                 find_and_set_empty_field(current_node.board)
+                parent_flag = True
 
 
 def bfs():
@@ -168,8 +184,8 @@ def bfs():
     remove_ways_to_out_of_board(current_node, True)
     queue = []
     while True:
-        if is_solved(current_node.board):
-            return "Rozwiazano"
+        if is_solved(current_node.board, SOLVED_BOARD):
+            return current_node.way
         else:
             try:
                 remove_ways_to_out_of_board(current_node, False)
@@ -200,39 +216,42 @@ def astr(heuristic):
                     return index_row, index_col
     if heuristic == 'manh':
         def calculate_error(current_board, solved_board):
-            error = 0
+            manh_error = 0
             for index_row, row in enumerate(current_board):
                 for index_col, elem in enumerate(row):
                     target_row, target_col = get_index_of_value(solved_board, elem)
-                    error += abs(index_row - target_row) + abs(index_col - target_col)
-            return error
+                    manh_error += abs(index_row - target_row) + abs(index_col - target_col)
+            return manh_error
     else:
         def calculate_error(current_board, solved_board):
-            error = 0
+            hamm_error = 0
             for index_row, row in enumerate(current_board):
                 for index_col, elem in enumerate(row):
                     target_row, target_col = get_index_of_value(solved_board, elem)
                     if abs(index_row - target_row) + abs(index_col - target_col) != 0:
-                        error += 1
-            return error
+                        hamm_error += 1
+            return hamm_error
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     while True:
-
-        if is_solved(current_node.board):
-            return 'Rozwiazano'
+        print(current_node.board)
+        if is_solved(current_node.board, SOLVED_BOARD):
+            return current_node.way
         else:
             for move in current_node.to_visit:
                 current_node.make_move(move)
                 current_node = current_node.children[move]
-                error = calculate_error(current_node.board, SOLVED_BOARD_3x3)
+                error = calculate_error(current_node.board, SOLVED_BOARD)
                 current_node = current_node.parent
                 find_and_set_empty_field(current_node.board)
                 current_node.errors[move] = error
             min_value = min(current_node.errors.values())
+            tmp = []
             for key in current_node.errors:
                 if current_node.errors[key] == min_value:
-                    next_move = key
+                    tmp.append(key)
+            nr = random.randint(0, len(tmp)-1)
+            next_move = tmp[nr]
             current_node.make_move(next_move)
             current_node = current_node.children[next_move]
             try:
@@ -267,8 +286,10 @@ if __name__ == '__main__':
 
     # Setting coordinates of empty field
     find_and_set_empty_field(START_BOARD)
-    print(astr('hamm'))
+    #print(astr('hamm'))
+    #print(astr('manh'))
     #print(bfs())
-    #print("--- %s seconds ---" % (time.time() - start_time))
+    #print(dfs())
+    print("--- %s seconds ---" % (time.time() - start_time))
 
 
