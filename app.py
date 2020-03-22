@@ -139,6 +139,17 @@ def find_and_set_empty_field(test_board):
                 EMPTY_FIELD['column'] = i
 
 
+def prepare_solution(data, solution_file, statistic_file):
+    data.remove(data[0])
+    solution_length = len(data)
+    solution = data
+    file = open(solution_file, 'w+')
+    file.write(str(solution_length))
+    file.write('\n')
+    file.write(str(solution))
+    file.close()
+
+
 # Algorithms
 def dfs():
     current_node = Node(START_BOARD, 'Root', None, [])
@@ -234,7 +245,6 @@ def astr(heuristic):
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     while True:
-        print(current_node.board)
         if is_solved(current_node.board, SOLVED_BOARD):
             return current_node.way
         else:
@@ -261,7 +271,7 @@ def astr(heuristic):
 
 
 if __name__ == '__main__':
-    start_time = time.time()
+
     # Parsing
     parser = argparse.ArgumentParser(description="Algorithm, order, source file, solution file, statistics file.")
     parser.add_argument('algorithm')
@@ -286,10 +296,20 @@ if __name__ == '__main__':
 
     # Setting coordinates of empty field
     find_and_set_empty_field(START_BOARD)
-    #print(astr('hamm'))
-    #print(astr('manh'))
-    #print(bfs())
-    #print(dfs())
+
+    start_time = time.time()
+    if args.algorithm == 'dfs':
+        prepare_solution(dfs(), args.solution_file, args.statistic_file)
+    elif args.algorithm == 'bfs':
+        prepare_solution(bfs(), args.solution_file, args.statistic_file)
+    else:
+        if ORDER == 'manh':
+            # to potrzebne jest dla korzenia zeby wiedzial co ma sprawdzic xD
+            ORDER = ['L', 'R', 'D', 'U']
+            print(astr('manh'))
+        else:
+            ORDER = ['L', 'R', 'D', 'U']
+            print(astr('hamm'))
     print("--- %s seconds ---" % (time.time() - start_time))
 
 
