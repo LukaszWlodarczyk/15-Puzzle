@@ -192,25 +192,33 @@ def bfs():
             find_and_set_empty_field(current_node.board)
 
 
-def manh():
+def astr(heuristic):
     def get_index_of_value(board, value):
         for index_row, row in enumerate(board):
             for index_col, elem in enumerate(row):
                 if elem == value:
                     return index_row, index_col
-
-    def calculate_error(current_board, solved_board):
-        error = 0
-        for index_row, row in enumerate(current_board):
-            for index_col, elem in enumerate(row):
-                target_row, target_col = get_index_of_value(solved_board, elem)
-                error += abs(index_row - target_row) + abs(index_col - target_col)
-        return error
-
+    if heuristic == 'manh':
+        def calculate_error(current_board, solved_board):
+            error = 0
+            for index_row, row in enumerate(current_board):
+                for index_col, elem in enumerate(row):
+                    target_row, target_col = get_index_of_value(solved_board, elem)
+                    error += abs(index_row - target_row) + abs(index_col - target_col)
+            return error
+    else:
+        def calculate_error(current_board, solved_board):
+            error = 0
+            for index_row, row in enumerate(current_board):
+                for index_col, elem in enumerate(row):
+                    target_row, target_col = get_index_of_value(solved_board, elem)
+                    if abs(index_row - target_row) + abs(index_col - target_col) != 0:
+                        error += 1
+            return error
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     while True:
-        print(current_node.board)
+
         if is_solved(current_node.board):
             return 'Rozwiazano'
         else:
@@ -259,7 +267,7 @@ if __name__ == '__main__':
 
     # Setting coordinates of empty field
     find_and_set_empty_field(START_BOARD)
-    print(manh())
+    print(astr('hamm'))
     #print(bfs())
     #print("--- %s seconds ---" % (time.time() - start_time))
 
