@@ -3,7 +3,6 @@ import random
 import time
 
 # GLOBAL VARIABLES
-SOLVED_BOARD_2x2 = [[1, 2], [3, 0]]
 SOLVED_BOARD_3x3 = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '0']]
 SOLVED_BOARD_4x4 = [['1', '2', '3', '4'], ['5', '6', '7', '8'], ['9', '10', '11', '12'], ['13', '14', '15', '0']]
 SOLVED_BOARD = SOLVED_BOARD_4x4
@@ -139,30 +138,50 @@ def find_and_set_empty_field(test_board):
                 EMPTY_FIELD['column'] = i
 
 
-def prepare_solution(data, solution_file, statistic_file):
-    data.remove(data[0])
-    solution_length = len(data)
-    solution = data
+def prepare_solution(data, solution_file, statistic_file, s_time):
+    way, processed_nodes, visited_nodes, depth_level = data
+    way.remove(way[0])
+    solution_length = len(way)
+    solution = way
     file = open(solution_file, 'w+')
     file.write(str(solution_length))
     file.write('\n')
     file.write(str(solution))
     file.close()
+    file = open(statistic_file, 'w+')
+    file.write('Solution length: ' + str(solution_length))
+    file.write('\n')
+    file.write('Processed states: ' + str(processed_nodes))
+    file.write('\n')
+    file.write('Visited states: ' + str(visited_nodes))
+    file.write('\n')
+    file.write('Execution time: ' + str(time.time() - s_time))
+    file.write('\n')
+    file.write('Max depth: ' + str(depth_level))
+    file.close()
 
 
 # Algorithms
 def dfs():
+    amount_of_processed_nodes = 1
+    amount_of_visited_nodes = 1
     current_node = Node(START_BOARD, 'Root', None, [])
     root_flag = True
     parent_flag = False
+    max_depth = False
     remove_ways_to_out_of_board(current_node, root_flag)
     while True:
         if is_solved(current_node.board, SOLVED_BOARD):
-            return current_node.way
+            if max_depth:
+                depth_level = DEPTH
+            else:
+                depth_level = len(current_node.way) - 1
+            return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, depth_level
         elif len(current_node.way) == DEPTH:
             current_node = current_node.parent
             find_and_set_empty_field(current_node.board)
             parent_flag = True
+            max_depth = True
         elif len(current_node.to_visit) != 0:
             if not root_flag and not parent_flag:
                 remove_ways_to_out_of_board(current_node)
@@ -174,6 +193,8 @@ def dfs():
                 find_and_set_empty_field(current_node.board)
                 root_flag = False
                 parent_flag = False
+                amount_of_visited_nodes += 1
+                amount_of_processed_nodes += 1
             else:
                 if current_node.last is None:
                     return ("Nie znaleziono rozwiazania")
@@ -191,12 +212,14 @@ def dfs():
 
 
 def bfs():
+    amount_of_processed_nodes = 1
+    amount_of_visited_nodes = 1
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     queue = []
     while True:
         if is_solved(current_node.board, SOLVED_BOARD):
-            return current_node.way
+            return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
         else:
             try:
                 remove_ways_to_out_of_board(current_node, False)
@@ -204,6 +227,7 @@ def bfs():
                 # Wystepuje gdy chcemy usunac ruch ktorego nei ma w tablicy
                 print(ValueError)
             for move in current_node.to_visit:
+                amount_of_processed_nodes += 1
                 current_node.make_move(move)
                 current_node = current_node.children[move]
                 queue.append(current_node)
@@ -216,10 +240,14 @@ def bfs():
             except ValueError:
                 print(current_node.way)
             current_node = queue[0]
+            amount_of_visited_nodes += 1
             find_and_set_empty_field(current_node.board)
 
 
 def astr(heuristic):
+    amount_of_visited_nodes = 1
+    amount_of_processed_nodes = 1
+
     def get_index_of_value(board, value):
         for index_row, row in enumerate(board):
             for index_col, elem in enumerate(row):
@@ -246,9 +274,10 @@ def astr(heuristic):
     remove_ways_to_out_of_board(current_node, True)
     while True:
         if is_solved(current_node.board, SOLVED_BOARD):
-            return current_node.way
+            return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
         else:
             for move in current_node.to_visit:
+                amount_of_processed_nodes += 1
                 current_node.make_move(move)
                 current_node = current_node.children[move]
                 error = calculate_error(current_node.board, SOLVED_BOARD)
@@ -264,6 +293,7 @@ def astr(heuristic):
             next_move = tmp[nr]
             current_node.make_move(next_move)
             current_node = current_node.children[next_move]
+            amount_of_visited_nodes += 1
             try:
                 remove_ways_to_out_of_board(current_node, False)
             except ValueError:
@@ -299,17 +329,17 @@ if __name__ == '__main__':
 
     start_time = time.time()
     if args.algorithm == 'dfs':
-        prepare_solution(dfs(), args.solution_file, args.statistic_file)
+        prepare_solution(dfs(), args.solution_file, args.statistic_file, start_time)
     elif args.algorithm == 'bfs':
-        prepare_solution(bfs(), args.solution_file, args.statistic_file)
+        prepare_solution(bfs(), args.solution_file, args.statistic_file, start_time)
     else:
         if ORDER == 'manh':
             # to potrzebne jest dla korzenia zeby wiedzial co ma sprawdzic xD
             ORDER = ['L', 'R', 'D', 'U']
-            print(astr('manh'))
+            prepare_solution(astr('manh'), args.solution_file, args.statistic_file, start_time)
         else:
             ORDER = ['L', 'R', 'D', 'U']
-            print(astr('hamm'))
-    print("--- %s seconds ---" % (time.time() - start_time))
+            prepare_solution(astr('hamm'), args.solution_file, args.statistic_file, start_time)
+
 
 
