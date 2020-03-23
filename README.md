@@ -29,7 +29,7 @@ File with start board format: \
 
 Order in statistic file:
 1. Solution length
-2. Processed nodes
-3. Visited nodes
-4. Execution time
-5. Depth level
+2. Visited nodes
+3. Processed nodes 
+4. Depth level
+5. Execution time in ms
