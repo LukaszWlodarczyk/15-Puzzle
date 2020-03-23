@@ -1,0 +1,5 @@
+Solution length: 6
+Processed states: 12
+Visited states: 7
+Execution time: 0.0
+Max depth: 6
