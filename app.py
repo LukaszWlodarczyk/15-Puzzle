@@ -222,17 +222,16 @@ def bfs(start_time):
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     queue = []
+    counter = 0
     while True:
+        counter += 1
         if time.time() - start_time > DEPTH:
             return -1, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
         if is_solved(current_node.board, SOLVED_BOARD):
             return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
         else:
-            try:
+            if not current_node.last is None:
                 remove_ways_to_out_of_board(current_node, False)
-            except ValueError:
-                # Wystepuje gdy chcemy usunac ruch ktorego nei ma w tablicy
-                print(ValueError)
             for move in current_node.to_visit:
                 amount_of_processed_nodes += 1
                 current_node.make_move(move)
@@ -245,7 +244,7 @@ def bfs(start_time):
                 if current_node.last is not None:
                     queue.remove(current_node)
             except ValueError:
-                print(current_node.way)
+                pass
             current_node = queue[0]
             amount_of_visited_nodes += 1
             find_and_set_empty_field(current_node.board)
