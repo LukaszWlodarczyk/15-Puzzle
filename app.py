@@ -9,7 +9,7 @@ SOLVED_BOARD = SOLVED_BOARD_4x4
 START_BOARD = []
 EMPTY_FIELD = {}
 ORDER = []
-DEPTH = 30
+DEPTH = 20
 
 
 class Node:
@@ -149,8 +149,9 @@ def prepare_solution(data, solution_file, statistic_file, s_time):
         solution = []
     file = open(solution_file, 'w+')
     file.write(str(solution_length))
-    file.write('\n')
-    file.write(str(solution))
+    if way != -1:
+        file.write('\n')
+        file.write(str(solution))
     file.close()
     file = open(statistic_file, 'w+')
     file.write(str(solution_length))
@@ -159,7 +160,7 @@ def prepare_solution(data, solution_file, statistic_file, s_time):
     file.write('\n')
     file.write(str(visited_nodes))
     file.write('\n')
-    file.write(str(time.time() - s_time))
+    file.write(str(round((time.time() - s_time)*1000, 3)))
     file.write('\n')
     file.write(str(depth_level))
     file.close()
@@ -306,7 +307,7 @@ def astr(heuristic, start_time):
                 try:
                     remove_ways_to_out_of_board(current_node, False)
                 except ValueError:
-                    print(ValueError)
+                    pass
         except MemoryError:
             return -1, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
 
