@@ -9,7 +9,7 @@ SOLVED_BOARD = SOLVED_BOARD_4x4
 START_BOARD = []
 EMPTY_FIELD = {}
 ORDER = []
-DEPTH = 20
+DEPTH = 30
 
 
 class Node:
@@ -140,35 +140,40 @@ def find_and_set_empty_field(test_board):
 
 def prepare_solution(data, solution_file, statistic_file, s_time):
     way, processed_nodes, visited_nodes, depth_level = data
-    way.remove(way[0])
-    solution_length = len(way)
-    solution = way
+    if way != -1:
+        way.remove(way[0])
+        solution_length = len(way)
+        solution = way
+    else:
+        solution_length = -1
+        solution = []
     file = open(solution_file, 'w+')
     file.write(str(solution_length))
     file.write('\n')
     file.write(str(solution))
     file.close()
     file = open(statistic_file, 'w+')
-    file.write('Solution length: ' + str(solution_length))
+    file.write(str(solution_length))
     file.write('\n')
-    file.write('Processed states: ' + str(processed_nodes))
+    file.write(str(processed_nodes))
     file.write('\n')
-    file.write('Visited states: ' + str(visited_nodes))
+    file.write(str(visited_nodes))
     file.write('\n')
-    file.write('Execution time: ' + str(time.time() - s_time))
+    file.write(str(time.time() - s_time))
     file.write('\n')
-    file.write('Max depth: ' + str(depth_level))
+    file.write(str(depth_level))
     file.close()
 
 
 # Algorithms
-def dfs():
+def dfs(start_time):
     amount_of_processed_nodes = 1
     amount_of_visited_nodes = 1
     current_node = Node(START_BOARD, 'Root', None, [])
     root_flag = True
     parent_flag = False
     max_depth = False
+    depth_level = 0
     remove_ways_to_out_of_board(current_node, root_flag)
     while True:
         if is_solved(current_node.board, SOLVED_BOARD):
@@ -196,28 +201,30 @@ def dfs():
                 amount_of_visited_nodes += 1
                 amount_of_processed_nodes += 1
             else:
-                if current_node.last is None:
-                    return ("Nie znaleziono rozwiazania")
+                if current_node.last is None or time.time() - start_time > DEPTH:
+                    return -1, amount_of_processed_nodes, amount_of_visited_nodes, depth_level
                 else:
                     current_node = current_node.parent
                     find_and_set_empty_field(current_node.board)
                     parent_flag = True
         else:
-            if current_node.last is None:
-                return("Nie znaleziono rozwiazania")
+            if current_node.last is None or time.time() - start_time > DEPTH:
+                return -1, amount_of_processed_nodes, amount_of_visited_nodes, depth_level
             else:
                 current_node = current_node.parent
                 find_and_set_empty_field(current_node.board)
                 parent_flag = True
 
 
-def bfs():
+def bfs(start_time):
     amount_of_processed_nodes = 1
     amount_of_visited_nodes = 1
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     queue = []
     while True:
+        if time.time() - start_time > DEPTH:
+            return -1, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
         if is_solved(current_node.board, SOLVED_BOARD):
             return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
         else:
@@ -244,7 +251,7 @@ def bfs():
             find_and_set_empty_field(current_node.board)
 
 
-def astr(heuristic):
+def astr(heuristic, start_time):
     amount_of_visited_nodes = 1
     amount_of_processed_nodes = 1
 
@@ -273,31 +280,36 @@ def astr(heuristic):
     current_node = Node(START_BOARD, 'Root', None, [])
     remove_ways_to_out_of_board(current_node, True)
     while True:
-        if is_solved(current_node.board, SOLVED_BOARD):
-            return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
-        else:
-            for move in current_node.to_visit:
-                amount_of_processed_nodes += 1
-                current_node.make_move(move)
-                current_node = current_node.children[move]
-                error = calculate_error(current_node.board, SOLVED_BOARD)
-                current_node = current_node.parent
-                find_and_set_empty_field(current_node.board)
-                current_node.errors[move] = error
-            min_value = min(current_node.errors.values())
-            tmp = []
-            for key in current_node.errors:
-                if current_node.errors[key] == min_value:
-                    tmp.append(key)
-            nr = random.randint(0, len(tmp)-1)
-            next_move = tmp[nr]
-            current_node.make_move(next_move)
-            current_node = current_node.children[next_move]
-            amount_of_visited_nodes += 1
-            try:
-                remove_ways_to_out_of_board(current_node, False)
-            except ValueError:
-                print(ValueError)
+        try:
+            if time.time() - start_time > DEPTH:
+                return -1, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
+            if is_solved(current_node.board, SOLVED_BOARD):
+                return current_node.way, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
+            else:
+                for move in current_node.to_visit:
+                    amount_of_processed_nodes += 1
+                    current_node.make_move(move)
+                    current_node = current_node.children[move]
+                    error = calculate_error(current_node.board, SOLVED_BOARD)
+                    current_node = current_node.parent
+                    find_and_set_empty_field(current_node.board)
+                    current_node.errors[move] = error
+                min_value = min(current_node.errors.values())
+                tmp = []
+                for key in current_node.errors:
+                    if current_node.errors[key] == min_value:
+                        tmp.append(key)
+                nr = random.randint(0, len(tmp)-1)
+                next_move = tmp[nr]
+                current_node.make_move(next_move)
+                current_node = current_node.children[next_move]
+                amount_of_visited_nodes += 1
+                try:
+                    remove_ways_to_out_of_board(current_node, False)
+                except ValueError:
+                    print(ValueError)
+        except MemoryError:
+            return -1, amount_of_processed_nodes, amount_of_visited_nodes, len(current_node.way) - 1
 
 
 if __name__ == '__main__':
@@ -326,20 +338,19 @@ if __name__ == '__main__':
 
     # Setting coordinates of empty field
     find_and_set_empty_field(START_BOARD)
-
     start_time = time.time()
     if args.algorithm == 'dfs':
-        prepare_solution(dfs(), args.solution_file, args.statistic_file, start_time)
+        prepare_solution(dfs(start_time), args.solution_file, args.statistic_file, start_time)
     elif args.algorithm == 'bfs':
-        prepare_solution(bfs(), args.solution_file, args.statistic_file, start_time)
+        prepare_solution(bfs(start_time), args.solution_file, args.statistic_file, start_time)
     else:
         if ORDER == 'manh':
             # to potrzebne jest dla korzenia zeby wiedzial co ma sprawdzic xD
             ORDER = ['L', 'R', 'D', 'U']
-            prepare_solution(astr('manh'), args.solution_file, args.statistic_file, start_time)
+            prepare_solution(astr('manh',start_time), args.solution_file, args.statistic_file, start_time)
         else:
             ORDER = ['L', 'R', 'D', 'U']
-            prepare_solution(astr('hamm'), args.solution_file, args.statistic_file, start_time)
+            prepare_solution(astr('hamm',start_time), args.solution_file, args.statistic_file, start_time)
 
 
 
