@@ -156,13 +156,13 @@ def prepare_solution(data, solution_file, statistic_file, s_time):
     file = open(statistic_file, 'w+')
     file.write(str(solution_length))
     file.write('\n')
-    file.write(str(processed_nodes))
-    file.write('\n')
     file.write(str(visited_nodes))
     file.write('\n')
-    file.write(str(round((time.time() - s_time)*1000, 3)))
+    file.write(str(processed_nodes))
     file.write('\n')
     file.write(str(depth_level))
+    file.write('\n')
+    file.write(str(round((time.time() - s_time) * 1000, 3)))
     file.close()
 
 
