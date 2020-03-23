@@ -23,7 +23,7 @@
 
 param([string]$strategy, [string]$param)
 
-$Progcmd = 'app.py'
+$Progcmd = 'python app.py'
 $Orders = @('RDUL', 'RDLU', 'DRUL', 'DRLU', 'LUDR',  'LURD', 'ULDR', 'ULRD')
 $Heuristics = @('hamm', 'manh')
 $InitFilenameRegex = '^[a-zA-Z0-9]+_[0-9]+_[0-9]+.txt$'
