@@ -9,7 +9,7 @@ SOLVED_BOARD = SOLVED_BOARD_4x4
 START_BOARD = []
 EMPTY_FIELD = {}
 ORDER = []
-DEPTH = 30
+DEPTH = 20
 
 
 class Node:
