@@ -1,8 +1,8 @@
 # Fifteen Puzzle Solver
 Python 3.8
-# Authors:
-# Jakub Grebowicz 216770
-# Lukasz Wlodarczyk 216922
+## Authors:
+## Jakub Grebowicz 216770
+## Lukasz Wlodarczyk 216922
 
 To start use in command line:\
     **python app.py [dfs | bfs | astr] [(ORDER) | (heuristic)] path_to_file_with_board.txt path_to_file_with_solution path_to_file_with_statistic.txt**\
